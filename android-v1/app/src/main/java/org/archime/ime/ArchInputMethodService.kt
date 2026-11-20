@@ -16,7 +16,6 @@ import android.widget.ImageView
 
 class ArchInputMethodService : InputMethodService() {
     private var shift = false
-    private var chineseMode = false
     private var keyboardRoot: LinearLayout? = null
     private val letterButtons = linkedMapOf<Char, Button>()
     private var modeLabel: TextView? = null
@@ -40,7 +39,7 @@ class ArchInputMethodService : InputMethodService() {
         }
         header.addView(mark, LinearLayout.LayoutParams(dp(34), dp(34)))
         modeLabel = TextView(this).apply {
-            text = if (chineseMode) "ArchIME · 双拼" else "ArchIME · English"
+            text = "ArchIME · English"
             textSize = 12f
             setTextColor(0xFFB9C2CE.toInt())
         }
@@ -75,12 +74,9 @@ class ArchInputMethodService : InputMethodService() {
             gravity = Gravity.CENTER
         }
         bottom.addView(keyButton("?123", 1f) { commit("?") }, weighted(1f))
-        bottom.addView(keyButton(",", .8f) { commit(if (chineseMode) "，" else ",") }, weighted(.8f))
-        bottom.addView(keyButton("English / 双拼", 3.2f) {
-            chineseMode = !chineseMode
-            refreshHeader()
-        }, weighted(3.2f))
-        bottom.addView(keyButton(".", .8f) { commit(if (chineseMode) "。" else ".") }, weighted(.8f))
+        bottom.addView(keyButton(",", .8f) { commit(",") }, weighted(.8f))
+        bottom.addView(keyButton("English · space", 3.2f) { commit(" ") }, weighted(3.2f))
+        bottom.addView(keyButton(".", .8f) { commit(".") }, weighted(.8f))
         bottom.addView(keyButton("↵", 1f) { enter() }, weighted(1f))
         root.addView(bottom)
         return root
@@ -140,10 +136,6 @@ class ArchInputMethodService : InputMethodService() {
         letterButtons.forEach { (key, button) ->
             button.text = if (shift) key.uppercaseChar().toString() else key.toString()
         }
-    }
-
-    private fun refreshHeader() {
-        modeLabel?.text = if (chineseMode) "ArchIME · 双拼" else "ArchIME · English"
     }
 
     private fun panel() = GradientDrawable().apply {
