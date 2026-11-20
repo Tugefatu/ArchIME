@@ -1,0 +1,66 @@
+name: Build ArchIME from zip
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unzip source
+        shell: bash
+        run: unzip -q ArchIME-0_7_2-dev-source.zip
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK platform, NDK and CMake
+        shell: bash
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          ls "$ANDROID_HOME"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.3.13750724" \
+            "cmake;3.22.1"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build UI-only Debug APK
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          gradle --no-daemon -p ArchIME-0.7.2-dev :app:assembleDebug 2>&1 | tee logs/build.log
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArchIME-debug-apk
+          path: ArchIME-0.7.2-dev/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArchIME-build-log
+          path: logs/**
+          if-no-files-found: ignore
+          retention-days: 7
