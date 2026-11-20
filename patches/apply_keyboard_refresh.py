@@ -40,7 +40,10 @@ manifest = root / "AndroidManifest.xml"
 manifest_text = manifest.read_text(encoding="utf-8")
 permission = '<uses-permission android:name="android.permission.VIBRATE" />'
 if permission not in manifest_text:
-    manifest_text = manifest_text.replace("<manifest ", "<manifest " + permission + " ", 1)
+    manifest_end = manifest_text.find(">")
+    if manifest_end < 0:
+        raise SystemExit("Malformed AndroidManifest.xml: opening manifest tag not found")
+    manifest_text = manifest_text[:manifest_end + 1] + "\\n    " + permission + manifest_text[manifest_end + 1:]
 manifest.write_text(manifest_text, encoding="utf-8")
 
 activity = root / "java/org/archime/ime/MainActivity.kt"
