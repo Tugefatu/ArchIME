@@ -10,13 +10,16 @@ def add_import(before, line):
 
 add_import("import android.content.res.ColorStateList\n", "import android.content.res.Configuration")
 add_import("import android.widget.Button\n", "import android.widget.FrameLayout")
-s = s.replace(
-    "    private val letterButtons = linkedMapOf<Char, Button>()\n",
-    "    private val letterButtons = linkedMapOf<Char, Button>()\n    private val keyHintViews = linkedMapOf<Char, TextView>()\n    private var modeButton: Button? = null\n"
-)
+add_import("import android.widget.TextView\n", "import android.widget.Toast")
+
+if "private var showNumbers" not in s:
+    s = s.replace("    private var shifted = false\n", "    private var shifted = false\n    private var showNumbers = false\n    private var numberRow: LinearLayout? = null\n")
+if "private val keyHintViews" not in s:
+    s = s.replace("    private val letterButtons = linkedMapOf<Char, Button>()\n",
+                  "    private val letterButtons = linkedMapOf<Char, Button>()\n    private val keyHintViews = linkedMapOf<Char, TextView>()\n    private var modeButton: Button? = null\n")
 
 a = s.index("    override fun onCreateInputView(): View {")
-b = s.index("    private fun addToolButton(", a)
+b = s.index("    private fun keyRipple(", a)
 view = r'''    override fun onCreateInputView(): View {
         blurActive = false
         root = LinearLayout(this).apply {
@@ -65,6 +68,7 @@ view = r'''    override fun onCreateInputView(): View {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER
+                if (index == 1) setPadding(dp(12), 0, dp(12), 0)
             }
             if (index == 2) addKey(row, "⇧", 1.25f, 50) { shifted = !shifted; refreshKeyLabels() }
             keys.forEachIndexed { keyIndex, key ->
@@ -130,8 +134,6 @@ view = r'''    override fun onCreateInputView(): View {
 '''
 s = s[:a] + view + s[b:]
 
-a = s.index("    private fun addToolButton(")
-b = s.index("    private fun keyRipple(", a)
 helpers = r'''    private fun addToolButton(row: LinearLayout, label: String, message: String, action: (() -> Unit)? = null) {
         val button = TextView(this).apply {
             text = label
@@ -255,7 +257,8 @@ helpers = r'''    private fun addToolButton(row: LinearLayout, label: String, me
     }
 
 '''
-s = s[:a] + helpers + s[b:]
+a = s.index("    private fun keyRipple(")
+s = s[:a] + helpers + s[a:]
 
 a = s.index("    private fun keyRipple(")
 b = s.index("    /** Android 12+ cross-window blur", a)
@@ -281,8 +284,6 @@ theme = r'''    private fun isDarkTheme(): Boolean =
 '''
 s = s[:a] + theme + s[b:]
 
-a = s.index("    private val shuangpinHints = mapOf(")
-b = s.index("    private fun isChineseActive()", a)
 hints = r'''    private val microsoftHints = mapOf(
         'q' to "IU", 'w' to "IA/UA", 'e' to "E", 'r' to "ER/UAN", 't' to "UE",
         'y' to "Ü/UAI", 'u' to "SH", 'i' to "CH", 'o' to "UO", 'p' to "UN/ÜN",
@@ -312,13 +313,18 @@ hints = r'''    private val microsoftHints = mapOf(
     }
 
 '''
-s = s[:a] + hints + s[b:]
+if "    private fun refreshKeyLabels()" in s:
+    a = s.index("    private fun refreshKeyLabels()")
+    b = s.index("    private fun isChineseActive()", a)
+    s = s[:a] + hints + s[b:]
+else:
+    a = s.index("    private fun isChineseActive()")
+    s = s[:a] + hints + s[a:]
 
 s = s.replace("setTextColor(Color.WHITE)\n                gravity = Gravity.CENTER", "setTextColor(if (isDarkTheme()) Color.WHITE else 0xFF20242A.toInt())\n                gravity = Gravity.CENTER")
 s = s.replace("setTextColor(0xFF8292A8.toInt())\n                gravity = Gravity.CENTER_VERTICAL", "setTextColor(if (isDarkTheme()) 0xFF8E98A5.toInt() else 0xFF737C87.toInt())\n                gravity = Gravity.CENTER_VERTICAL")
 s = s.replace("setTextColor(0xFFB7C5D8.toInt())\n            gravity = Gravity.CENTER", "setTextColor(if (isDarkTheme()) 0xFFB7C0CC.toInt() else 0xFF6D7681.toInt())\n            gravity = Gravity.CENTER")
 
-# Prevent Chinese mode from silently inserting Latin letters when its engine is absent.
 old = '''        if (!isChineseActive() || !rimeReady) {
             if (isChineseActive() && !rimeReady) {
                 status.text = "ArchIME · Rime 未打包，暂用英文输入"
