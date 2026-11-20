@@ -35,7 +35,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Integrate ARM64 Rime and Microsoft Shuangpin\n        run: bash android-v1/scripts/integrate_rime_native.sh\n      - name: Generate original key click sample
+      - name: Integrate ARM64 Rime and Microsoft Shuangpin
+        run: bash android-v1/scripts/integrate_rime_native.sh
+      - name: Generate original key click sample
         run: python3 android-v1/scripts/generate_key_click.py
       - name: Compile clean v1 project
         run: gradle --no-daemon -p android-v1 :app:assembleDebug
