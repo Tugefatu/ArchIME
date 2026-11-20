@@ -24,19 +24,6 @@ echo "== Stage Rime runtime data and native bridge =="
 mkdir -p "$MAIN/assets"
 rm -rf "$MAIN/assets/rime"
 cp -a "$SRC/assets/rime" "$MAIN/assets/rime"
-python3 - "$MAIN/assets/rime/shared/default.yaml" <<'PY'
-from pathlib import Path
-import sys
-p = Path(sys.argv[1])
-s = p.read_text()
-entry = "  - schema: double_pinyin_mspy"
-if entry not in s:
-    marker = "schema_list:\n"
-    if marker not in s:
-        raise SystemExit("default.yaml has no schema_list")
-    s = s.replace(marker, marker + entry + "\n", 1)
-    p.write_text(s)
-PY
 cp "$BRIDGE" "$TEMP/archime_native_bridge.cpp"
 
 echo "== Fetch pinned Trime/librime source tree =="
