@@ -60,6 +60,20 @@ git clone --depth 1 https://github.com/rime/rime-double-pinyin.git "$DOUBLE_PINY
 test -s "$DOUBLE_PINYIN/double_pinyin_mspy.schema.yaml"
 cp "$DOUBLE_PINYIN/double_pinyin_mspy.schema.yaml" "$SHARED/"
 
+python3 - "$MAIN/assets/rime/shared/default.yaml" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text()
+entry = "  - schema: double_pinyin_mspy"
+if entry not in s:
+    marker = "schema_list:\\n"
+    if marker not in s:
+        raise SystemExit("default.yaml has no schema_list")
+    s = s.replace(marker, marker + entry + "\\n", 1)
+    p.write_text(s)
+PY
+
 rm -rf "$MAIN/cpp"
 mkdir -p "$MAIN/cpp"
 cp -a "$TRIME/app/src/main/jni/." "$MAIN/cpp/"
