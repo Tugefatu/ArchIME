@@ -67,10 +67,10 @@ p = Path(sys.argv[1])
 s = p.read_text()
 entry = "  - schema: double_pinyin_mspy"
 if entry not in s:
-    marker = "schema_list:\\n"
+    marker = "schema_list:\n"
     if marker not in s:
         raise SystemExit("default.yaml has no schema_list")
-    s = s.replace(marker, marker + entry + "\\n", 1)
+    s = s.replace(marker, marker + entry + "\n", 1)
     p.write_text(s)
 PY
 
