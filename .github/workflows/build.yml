@@ -20,6 +20,35 @@ jobs:
         shell: bash
         run: unzip -q ArchIME-0_7_2-dev-source.zip
 
+      - name: Make keyboard usable without bundled Rime
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("ArchIME-0.7.2-dev/app/src/main/java/org/archime/ime/ArchInputMethodService.kt")
+          s = p.read_text()
+          old = '''        if (!isChineseActive()) { commit(c.toString()); return }
+        if (!rimeReady) {
+            status.text = "中文引擎尚未接入；切换「英」可正常输入"
+            return
+        }
+'''
+          new = '''        // Keep basic typing functional even when this build has no staged librime.
+        // In that case Chinese mode degrades gracefully to Latin input instead of swallowing keys.
+        if (!isChineseActive() || !rimeReady) {
+            if (isChineseActive() && !rimeReady) {
+                status.text = "ArchIME · Rime 未打包，暂用英文输入"
+            }
+            commit(c.toString())
+            return
+        }
+'''
+          if old not in s:
+              raise SystemExit("Expected onLetter fallback block was not found; refusing to patch")
+          p.write_text(s.replace(old, new, 1))
+          print("Patched: letter keys now commit text when Rime is unavailable.")
+          PY
+
       - name: Inspect and archive unpacked source
         shell: bash
         run: |
@@ -113,7 +142,7 @@ jobs:
           EOF
           test -f "$GITHUB_WORKSPACE/logs-jvm-compat.gradle"
 
-      - name: Build UI-only Debug APK
+      - name: Build ArchIME Debug APK
         shell: bash
         run: |
           set -o pipefail
