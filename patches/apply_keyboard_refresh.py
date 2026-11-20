@@ -36,6 +36,13 @@ with wave.open(str(out), "wb") as wav:
     wav.writeframes(b"".join(struct.pack("<h", x) for x in samples))
 
 # Add explicit, independent feedback switches to the setup page.
+manifest = root / "AndroidManifest.xml"
+manifest_text = manifest.read_text(encoding="utf-8")
+permission = '<uses-permission android:name="android.permission.VIBRATE" />'
+if permission not in manifest_text:
+    manifest_text = manifest_text.replace("<manifest ", "<manifest " + permission + " ", 1)
+manifest.write_text(manifest_text, encoding="utf-8")
+
 activity = root / "java/org/archime/ime/MainActivity.kt"
 text = activity.read_text(encoding="utf-8")
 marker = '        root.addView(label("切换开关后，重新弹出键盘即可生效。", 11f, 0xFF8292A8.toInt()).apply { setPadding(dp(4), 0, 0, dp(18)) })'
