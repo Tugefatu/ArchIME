@@ -214,7 +214,7 @@ class ArchInputMethodService : InputMethodService() {
         setPadding(0, 0, 0, 0)
         stateListAnimator = null
         setOnClickListener {
-            feedback()
+            feedback(this)
             action()
         }
     }
@@ -228,7 +228,7 @@ class ArchInputMethodService : InputMethodService() {
         layoutParams = LinearLayout.LayoutParams(dp(34), dp(34))
     }
 
-    private fun feedback() {
+    private fun feedback(sourceView: View) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         if (prefs.getBoolean("haptics_enabled", true)) {
             val strength = prefs.getInt("haptic_strength", 45).coerceIn(1, 100)
@@ -247,10 +247,10 @@ class ArchInputMethodService : InputMethodService() {
                         )
                     )
                 } else {
-                    currentInputView?.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) ?: false
+                    sourceView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
                 }
             } catch (_: Exception) {
-                currentInputView?.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) ?: false
+                sourceView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
             }
         }
         if (prefs.getBoolean("sound_enabled", false) && soundReady) {
