@@ -30,7 +30,7 @@ import android.widget.TextView
 import android.widget.Toast
 import android.view.WindowManager
 import android.graphics.drawable.ColorDrawable
-import android.view.inputmethod.InputMethodService
+import android.inputmethodservice.InputMethodService
 import org.archime.ime.engine.InputEngine
 import org.archime.ime.engine.NativeRimeEngine
 import org.archime.ime.engine.RimeAssetInstaller
