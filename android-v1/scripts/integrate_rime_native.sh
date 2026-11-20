@@ -36,6 +36,7 @@ git -C "$TRIME" submodule update --init --recursive --depth 1
 
 echo "== Refresh Rime dictionaries and Microsoft Shuangpin schema =="
 SHARED="$MAIN/assets/rime/shared"
+mkdir -p "$SHARED"
 for component in prelude luna-pinyin stroke essay; do
   source_dir="$TRIME/app/data/rime/$component"
   if [ ! -d "$source_dir" ]; then
