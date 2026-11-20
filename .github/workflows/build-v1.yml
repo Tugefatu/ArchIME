@@ -6,6 +6,7 @@ on:
     branches: [rewrite/archime-v1-clean]
     paths:
       - 'android-v1/**'
+      - 'legacy/**'
       - '.github/workflows/build-v1.yml'
 
 permissions:
@@ -45,6 +46,9 @@ jobs:
           test -s "$APK"
           unzip -t "$APK"
           unzip -l "$APK" | grep -q 'classes.dex'
+          unzip -l "$APK" | grep -q 'lib/arm64-v8a/libarchime_rime.so'
+          unzip -l "$APK" | grep -q 'assets/rime/shared/luna_pinyin.dict.yaml'
+          unzip -l "$APK" | grep -q 'assets/rime/shared/stroke.dict.yaml'
           unzip -l "$APK" | grep -q 'assets/rime/shared/double_pinyin_mspy.schema.yaml'
           unzip -p "$APK" assets/rime/shared/double_pinyin_mspy.schema.yaml | grep -q 'schema_id: double_pinyin_mspy'
           unzip -p "$APK" assets/rime/shared/double_pinyin_mspy.schema.yaml | grep -q 'dictionary: luna_pinyin'
