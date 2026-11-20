@@ -42,7 +42,7 @@ view = r'''    override fun onCreateInputView(): View {
         header.addView(status, LinearLayout.LayoutParams(0, dp(32), 1f))
         addToolButton(header, "Aa", "切换字母大小写") { shifted = !shifted; refreshKeyLabels() }
         addToolButton(header, "✎", "手写输入尚未接入")
-        addToolButton(header, "🎙", "语音输入尚未接入")
+        addToolImage(header, android.R.drawable.ic_btn_speak_now, "语音输入尚未接入")
         addToolButton(header, "⌄", "收起键盘") { requestHideSelf(0) }
         root.addView(header)
 
@@ -96,7 +96,7 @@ view = r'''    override fun onCreateInputView(): View {
         addKey(bottom, "〰", 3.4f, 48) {
             Toast.makeText(this, "语音识别尚未接入", Toast.LENGTH_SHORT).show()
         }
-        modeButton = addKey(bottom, "双英", 1.05f, 48) {
+        modeButton = addKey(bottom, "双/英", 1.05f, 48) {
             chineseMode = !chineseMode
             getSharedPreferences("archime_settings", MODE_PRIVATE).edit().putBoolean("chinese_mode", chineseMode).apply()
             if (rimeReady) renderUpdate(engine.clear()) else refreshCandidates(emptyList())
@@ -108,7 +108,7 @@ view = r'''    override fun onCreateInputView(): View {
         root.addView(bottom)
 
         val utility = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        addUtilityButton(utility, "⚙", "键盘管理设置") {
+        addUtilityButton(utility, "☷", "键盘管理设置") {
             try {
                 val launch = packageManager.getLaunchIntentForPackage(packageName)
                 if (launch != null) startActivity(launch)
@@ -148,6 +148,21 @@ helpers = r'''    private fun addToolButton(row: LinearLayout, label: String, me
             }
         }
         row.addView(button, LinearLayout.LayoutParams(dp(31), dp(30)).apply { setMargins(dp(2), 0, dp(2), 0) })
+    }
+
+
+    private fun addToolImage(row: LinearLayout, iconRes: Int, message: String) {
+        val image = ImageView(this).apply {
+            setImageResource(iconRes)
+            setColorFilter(if (isDarkTheme()) Color.WHITE else 0xFF20242A.toInt())
+            contentDescription = message
+            setOnClickListener {
+                Toast.makeText(this@ArchInputMethodService, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+        row.addView(image, LinearLayout.LayoutParams(dp(31), dp(30)).apply {
+            setMargins(dp(2), 0, dp(2), 0)
+        })
     }
 
     private fun addUtilityButton(row: LinearLayout, label: String, message: String, action: () -> Unit) {
@@ -304,9 +319,9 @@ hints = r'''    private val microsoftHints = mapOf(
 
     private fun refreshModeButton() {
         val button = modeButton ?: return
-        val label = android.text.SpannableString("双英")
+        val label = android.text.SpannableString("双/英")
         if (!chineseMode) {
-            label.setSpan(android.text.style.ForegroundColorSpan(0xFF2997F3.toInt()), 1, 2,
+            label.setSpan(android.text.style.ForegroundColorSpan(0xFF2997F3.toInt()), 2, 3,
                 android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         button.text = label
