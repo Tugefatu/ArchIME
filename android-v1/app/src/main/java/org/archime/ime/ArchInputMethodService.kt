@@ -247,10 +247,10 @@ class ArchInputMethodService : InputMethodService() {
                         )
                     )
                 } else {
-                    performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                    currentInputView?.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) ?: false
                 }
             } catch (_: Exception) {
-                performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                currentInputView?.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) ?: false
             }
         }
         if (prefs.getBoolean("sound_enabled", false) && soundReady) {
