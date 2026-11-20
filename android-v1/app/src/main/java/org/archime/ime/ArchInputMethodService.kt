@@ -7,6 +7,10 @@ import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.media.AudioAttributes
 import android.media.SoundPool
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
@@ -127,7 +131,24 @@ class ArchInputMethodService : InputMethodService() {
         stateListAnimator = null
         setOnClickListener {
             val prefs = PreferenceManager.getDefaultSharedPreferences(this@ArchInputMethodService)
-            if (prefs.getBoolean("haptics_enabled", true)) performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+            if (prefs.getBoolean("haptics_enabled", true)) {
+                val strength = prefs.getInt("haptic_strength", 45).coerceIn(1, 100)
+                try {
+                    val vibrator = if (Build.VERSION.SDK_INT >= 31) {
+                        (getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+                    } else {
+                        @Suppress("DEPRECATION")
+                        getSystemService(VIBRATOR_SERVICE) as Vibrator
+                    }
+                    if (Build.VERSION.SDK_INT >= 26 && vibrator.hasAmplitudeControl()) {
+                        vibrator.vibrate(VibrationEffect.createOneShot(10, (strength * 2.55f).toInt().coerceIn(1, 255)))
+                    } else {
+                        performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                    }
+                } catch (_: Exception) {
+                    performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                }
+            }
             if (prefs.getBoolean("sound_enabled", false) && keySoundReady) {
                 val volume = prefs.getInt("sound_volume", 35).coerceIn(0, 100) / 100f
                 keySoundPool?.play(keySoundId, volume, volume, 1, 0, 1f)
