@@ -8,6 +8,8 @@ import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import android.content.Intent
+import android.preference.PreferenceManager
 import android.view.KeyEvent
 import android.widget.Button
 import android.widget.LinearLayout
@@ -27,6 +29,7 @@ class ArchInputMethodService : InputMethodService() {
             background = panel()
         }
         keyboardRoot = root
+        letterButtons.clear()
         val header = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
             orientation = LinearLayout.HORIZONTAL
@@ -44,6 +47,7 @@ class ArchInputMethodService : InputMethodService() {
             setTextColor(0xFFB9C2CE.toInt())
         }
         header.addView(modeLabel, LinearLayout.LayoutParams(0, dp(34), 1f))
+        header.addView(tool("⚙") { startActivity(Intent(this, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) })
         header.addView(tool("⌄") { requestHideSelf(0) })
         root.addView(header)
 
@@ -63,7 +67,7 @@ class ArchInputMethodService : InputMethodService() {
                     }
                 }
                 if (key.length == 1 && key[0].isLetter()) letterButtons[key[0].lowercaseChar()] = keyView
-                row.addView(keyView, LinearLayout.LayoutParams(0, dp(48), if (key == "⇧" || key == "⌫") 1.35f else 1f).apply {
+                row.addView(keyView, LinearLayout.LayoutParams(0, dp(PreferenceManager.getDefaultSharedPreferences(this).getInt("key_height", 48)), if (key == "⇧" || key == "⌫") 1.35f else 1f).apply {
                     setMargins(dp(2), 0, dp(2), 0)
                 })
             }
@@ -97,7 +101,12 @@ class ArchInputMethodService : InputMethodService() {
         minimumWidth = 0
         setPadding(0, 0, 0, 0)
         stateListAnimator = null
-        setOnClickListener { performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP); action() }
+        setOnClickListener {
+            if (PreferenceManager.getDefaultSharedPreferences(this@ArchInputMethodService).getBoolean("haptics_enabled", true)) {
+                performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+            }
+            action()
+        }
     }
 
     private fun tool(label: String, action: () -> Unit) = TextView(this).apply {
