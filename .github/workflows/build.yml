@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -20,32 +22,13 @@ jobs:
         shell: bash
         run: unzip -q ArchIME-0_7_2-dev-source.zip
 
-      - name: Keep keyboard usable if Rime initialization fails
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("ArchIME-0.7.2-dev/app/src/main/java/org/archime/ime/ArchInputMethodService.kt")
-          s = p.read_text()
-          start = s.index("        if (!isChineseActive())")
-          end = s.index("        // Rime schemas", start)
-          replacement = """        // Never swallow key presses if the bundled Rime engine cannot initialize.
-                  if (!isChineseActive() || !rimeReady) {
-                      if (isChineseActive() && !rimeReady) {
-                          status.text = "ArchIME · Rime 引擎未就绪，暂用英文输入"
-                      }
-                      commit(c.toString())
-                      return
-                  }
-          """
-          s = s[:start] + replacement + s[end:]
-          p.write_text(s)
-          print("Patched safe English fallback.")
-          PY
-
       - name: Refresh ArchIME keyboard layout
         shell: bash
         run: python3 patches/refresh_keyboard.py
+
+      - name: Fix IME main-thread Rime freeze
+        shell: bash
+        run: python3 patches/fix_ime_main_thread_freeze.py
 
       - name: Build and stage Android ARM64 librime plus Microsoft Shuangpin data
         shell: bash
