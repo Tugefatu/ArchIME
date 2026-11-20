@@ -103,5 +103,6 @@ s = s.replace("""    private fun refreshKeyLabels() {
 """)
 if "import android.widget.Toast" not in s:
     s = s.replace("import android.widget.TextView\n", "import android.widget.TextView\nimport android.widget.Toast\n")
+s = s.replace(r"\${shuangpinHints", "${shuangpinHints")
 p.write_text(s, encoding="utf-8")
 print("Applied ArchIME keyboard layout refresh.")
