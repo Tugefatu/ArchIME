@@ -47,6 +47,10 @@ jobs:
         shell: bash
         run: python3 patches/refresh_keyboard.py
 
+      - name: Fix IME main-thread Rime freeze
+        shell: bash
+        run: python3 patches/fix_ime_main_thread_freeze.py
+
       - name: Build and stage Android ARM64 librime plus Microsoft Shuangpin data
         shell: bash
         run: bash patches/integrate_rime_native.sh
