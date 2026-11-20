@@ -20,6 +20,27 @@ jobs:
         shell: bash
         run: unzip -q ArchIME-0_7_2-dev-source.zip
 
+      - name: Inspect and archive unpacked source
+        shell: bash
+        run: |
+          echo "=== Source tree ==="
+          find ArchIME-0.7.2-dev/app/src/main -maxdepth 8 -type f -print | sort
+          for f in \
+            ArchIME-0.7.2-dev/app/src/main/AndroidManifest.xml \
+            ArchIME-0.7.2-dev/app/src/main/java/org/archime/ime/ArchInputMethodService.kt \
+            ArchIME-0.7.2-dev/app/src/main/java/org/archime/ime/MainActivity.kt \
+            ArchIME-0.7.2-dev/app/src/main/res/xml/method.xml; do
+            if [ -f "$f" ]; then echo "=== $f ==="; sed -n '1,420p' "$f"; fi
+          done
+
+      - name: Upload unpacked Android source
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArchIME-unpacked-source
+          path: ArchIME-0.7.2-dev/app/src/main/**
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Fix Android InputType constant names
         shell: bash
         run: |
