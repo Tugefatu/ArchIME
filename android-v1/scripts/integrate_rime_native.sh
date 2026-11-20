@@ -54,7 +54,7 @@ for component in prelude luna-pinyin stroke essay; do
     echo "Missing Rime data submodule: $source_dir" >&2
     exit 1
   fi
-  find -L "$source_dir" -type f \\( -name '*.yaml' -o -name '*.txt' \\) -exec cp -f {} "$SHARED/" \\;
+  find -L "$source_dir" -type f \( -name '*.yaml' -o -name '*.txt' \) -exec cp -f {} "$SHARED/" \;
 done
 git clone --depth 1 https://github.com/rime/rime-double-pinyin.git "$DOUBLE_PINYIN"
 test -s "$DOUBLE_PINYIN/double_pinyin_mspy.schema.yaml"
