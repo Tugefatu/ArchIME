@@ -20,6 +20,23 @@ jobs:
         shell: bash
         run: unzip -q ArchIME-0_7_2-dev-source.zip
 
+      - name: Fix Android InputType constant names
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("ArchIME-0.7.2-dev/app/src/main/java/org/archime/ime/ArchInputMethodService.kt")
+          s = p.read_text()
+          s = re.sub(r"(?<!CLASS_)TYPE_TEXT\\b", "TYPE_CLASS_TEXT", s)
+          s = re.sub(r"(?<!CLASS_)TYPE_NUMBER\\b", "TYPE_CLASS_NUMBER", s)
+          p.write_text(s)
+          print("Patched Android InputType constants:")
+          for n, line in enumerate(s.splitlines(), 1):
+              if 325 <= n <= 342:
+                  print(f"{n}: {line}")
+          PY
+
       - name: Diagnose Gradle source and Maven access
         shell: bash
         run: |
