@@ -10,11 +10,14 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 100
-        versionName = "1.0.0-rewrite"
+        versionName = "1.0.1-rime"
+        ndk { abiFilters += listOf("arm64-v8a") }
+        externalNativeBuild { cmake { cppFlags += listOf("-std=c++17") } }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" } }
 }
