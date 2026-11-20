@@ -90,8 +90,28 @@ class SettingsActivity : Activity() {
                 prefs.edit().putBoolean("haptics_enabled", checked).apply()
             }
         })
+        val hapticLabel = TextView(this).apply {
+            text = "震动强度：${prefs.getInt("haptic_strength", 45)}%"
+            textSize = 14f
+            setTextColor(0xFFCFD5DE.toInt())
+            setPadding(0, 18, 0, 0)
+        }
+        root.addView(hapticLabel)
+        root.addView(SeekBar(this).apply {
+            max = 100
+            progress = prefs.getInt("haptic_strength", 45).coerceIn(1, 100)
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val value = progress.coerceAtLeast(1)
+                    hapticLabel.text = "震动强度：$value%"
+                    prefs.edit().putInt("haptic_strength", value).apply()
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
+        })
         root.addView(TextView(this).apply {
-            text = "设置会保存在本机。当前提供原创建的轻点击音效；微软双拼和震动强度仍在开发中。"
+            text = "设置会保存在本机。当前提供原创建的轻点击音效；微软双拼仍在开发中；部分设备不支持精确震动强度。"
             textSize = 12f
             setTextColor(0xFF8D98A8.toInt())
             setPadding(0, 22, 0, 0)
