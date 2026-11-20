@@ -5,6 +5,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
@@ -17,10 +19,32 @@ import android.widget.TextView
 import android.widget.ImageView
 
 class ArchInputMethodService : InputMethodService() {
+    override fun onCreate() {
+        super.onCreate()
+        keySoundPool = SoundPool.Builder().setMaxStreams(4).setAudioAttributes(
+            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+        ).build().also { pool ->
+            pool.setOnLoadCompleteListener { _, sampleId, status ->
+                if (status == 0 && sampleId == keySoundId) keySoundReady = true
+            }
+            keySoundId = pool.load(this, R.raw.arch_key_click, 1)
+        }
+    }
+
+    override fun onDestroy() {
+        keySoundPool?.release()
+        keySoundPool = null
+        super.onDestroy()
+    }
+
     private var shift = false
     private var keyboardRoot: LinearLayout? = null
     private val letterButtons = linkedMapOf<Char, Button>()
     private var modeLabel: TextView? = null
+    private var keySoundPool: SoundPool? = null
+    private var keySoundId: Int = 0
+    private var keySoundReady = false
 
     override fun onCreateInputView(): View {
         val root = LinearLayout(this).apply {
@@ -102,8 +126,11 @@ class ArchInputMethodService : InputMethodService() {
         setPadding(0, 0, 0, 0)
         stateListAnimator = null
         setOnClickListener {
-            if (PreferenceManager.getDefaultSharedPreferences(this@ArchInputMethodService).getBoolean("haptics_enabled", true)) {
-                performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+            val prefs = PreferenceManager.getDefaultSharedPreferences(this@ArchInputMethodService)
+            if (prefs.getBoolean("haptics_enabled", true)) performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+            if (prefs.getBoolean("sound_enabled", false) && keySoundReady) {
+                val volume = prefs.getInt("sound_volume", 35).coerceIn(0, 100) / 100f
+                keySoundPool?.play(keySoundId, volume, volume, 1, 0, 1f)
             }
             action()
         }
