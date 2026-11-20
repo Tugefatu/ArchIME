@@ -19,6 +19,7 @@ class ArchInputMethodService : InputMethodService() {
     private var chineseMode = false
     private var keyboardRoot: LinearLayout? = null
     private val letterButtons = linkedMapOf<Char, Button>()
+    private var modeLabel: TextView? = null
 
     override fun onCreateInputView(): View {
         val root = LinearLayout(this).apply {
@@ -38,12 +39,12 @@ class ArchInputMethodService : InputMethodService() {
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
         header.addView(mark, LinearLayout.LayoutParams(dp(34), dp(34)))
-        header.addView(TextView(this).apply {
-            text = if (chineseMode) "ArchIME · 双拼" else "ArchIME"
+        modeLabel = TextView(this).apply {
+            text = if (chineseMode) "ArchIME · 双拼" else "ArchIME · English"
             textSize = 12f
             setTextColor(0xFFB9C2CE.toInt())
-        }, LinearLayout.LayoutParams(0, dp(34), 1f))
-        header.addView(tool("⚙") { requestShowSelf(0) })
+        }
+        header.addView(modeLabel, LinearLayout.LayoutParams(0, dp(34), 1f))
         header.addView(tool("⌄") { requestHideSelf(0) })
         root.addView(header)
 
@@ -142,7 +143,7 @@ class ArchInputMethodService : InputMethodService() {
     }
 
     private fun refreshHeader() {
-        keyboardRoot?.invalidate()
+        modeLabel?.text = if (chineseMode) "ArchIME · 双拼" else "ArchIME · English"
     }
 
     private fun panel() = GradientDrawable().apply {
