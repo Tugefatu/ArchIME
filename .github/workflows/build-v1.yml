@@ -17,6 +17,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout pinned legacy Rime integration source archive
+        uses: actions/checkout@v4
+        with:
+          ref: fix-ime-startup-and-feedback-settings
+          path: legacy
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -25,11 +30,11 @@ jobs:
         run: |
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0" "ndk;27.3.13750724" "cmake;3.22.1"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Generate original key click sample
+      - name: Integrate ARM64 Rime and Microsoft Shuangpin\n        run: bash android-v1/scripts/integrate_rime_native.sh\n      - name: Generate original key click sample
         run: python3 android-v1/scripts/generate_key_click.py
       - name: Compile clean v1 project
         run: gradle --no-daemon -p android-v1 :app:assembleDebug
@@ -45,7 +50,7 @@ jobs:
           unzip -p "$APK" assets/rime/shared/double_pinyin_mspy.schema.yaml | grep -q 'dictionary: luna_pinyin'
       - uses: actions/upload-artifact@v4
         with:
-          name: ArchIME-v1-foundation-debug
+          name: ArchIME-v1-rime-debug
           path: android-v1/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
