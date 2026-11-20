@@ -31,6 +31,8 @@ import sys
 
 path = Path(sys.argv[1])
 text = path.read_text()
+# The original Trime frontend wrapper is not used; ArchIME calls librime directly.
+text = text.replace('add_subdirectory(librime_jni)', '# ArchIME JNI replaces Trime JNI wrapper')
 marker = "# ArchIME JNI bridge linked against the upstream Rime static engine."
 if marker not in text:
     text += r"""
