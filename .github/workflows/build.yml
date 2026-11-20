@@ -27,26 +27,20 @@ jobs:
           from pathlib import Path
           p = Path("ArchIME-0.7.2-dev/app/src/main/java/org/archime/ime/ArchInputMethodService.kt")
           s = p.read_text()
-          old = '''        if (!isChineseActive()) { commit(c.toString()); return }
-        if (!rimeReady) {
-            status.text = "中文引擎尚未接入；切换「英」可正常输入"
-            return
-        }
-'''
-          new = '''        // Keep basic typing functional even when this build has no staged librime.
-        // In that case Chinese mode degrades gracefully to Latin input instead of swallowing keys.
-        if (!isChineseActive() || !rimeReady) {
-            if (isChineseActive() && !rimeReady) {
-                status.text = "ArchIME · Rime 未打包，暂用英文输入"
-            }
-            commit(c.toString())
-            return
-        }
-'''
-          if old not in s:
-              raise SystemExit("Expected onLetter fallback block was not found; refusing to patch")
-          p.write_text(s.replace(old, new, 1))
-          print("Patched: letter keys now commit text when Rime is unavailable.")
+          start = s.index("        if (!isChineseActive())")
+          end = s.index("        // Rime schemas", start)
+          replacement = """        // Rime is not bundled in this build yet; never swallow key presses.
+                  if (!isChineseActive() || !rimeReady) {
+                      if (isChineseActive() && !rimeReady) {
+                          status.text = "ArchIME · Rime 未打包，暂用英文输入"
+                      }
+                      commit(c.toString())
+                      return
+                  }
+          """
+          s = s[:start] + replacement + s[end:]
+          p.write_text(s)
+          print("Patched graceful English fallback.")
           PY
 
       - name: Inspect and archive unpacked source
