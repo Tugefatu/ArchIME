@@ -6,10 +6,11 @@ MAIN="$ROOT/android-v1/app/src/main"
 LEGACY_ZIP="$ROOT/legacy/ArchIME-0_7_2-dev-source.zip"
 OLD="$TEMP/archime-legacy-source"
 TRIME="$TEMP/archime-trime"
+DOUBLE_PINYIN="$TEMP/archime-double-pinyin"
 TRIME_COMMIT="8ef9ff825c7e993934682f1fc6da0bccfc620360"
 
 test -s "$LEGACY_ZIP"
-rm -rf "$OLD" "$TRIME"
+rm -rf "$OLD" "$TRIME" "$DOUBLE_PINYIN"
 mkdir -p "$OLD"
 unzip -q "$LEGACY_ZIP" -d "$OLD"
 SCHEMA_SOURCE="$(find "$OLD" -type f -path '*/assets/rime/shared/luna_pinyin.dict.yaml' -print -quit)"
@@ -44,6 +45,20 @@ git -C "$TRIME" fetch --depth 1 origin "$TRIME_COMMIT"
 git -C "$TRIME" checkout --detach "$TRIME_COMMIT"
 git -C "$TRIME" submodule sync --recursive
 git -C "$TRIME" submodule update --init --recursive --depth 1
+
+echo "== Refresh Rime dictionaries and Microsoft Shuangpin schema =="
+SHARED="$MAIN/assets/rime/shared"
+for component in prelude luna-pinyin stroke essay; do
+  source_dir="$TRIME/app/data/rime/$component"
+  if [ ! -d "$source_dir" ]; then
+    echo "Missing Rime data submodule: $source_dir" >&2
+    exit 1
+  fi
+  find -L "$source_dir" -type f \\( -name '*.yaml' -o -name '*.txt' \\) -exec cp -f {} "$SHARED/" \\;
+done
+git clone --depth 1 https://github.com/rime/rime-double-pinyin.git "$DOUBLE_PINYIN"
+test -s "$DOUBLE_PINYIN/double_pinyin_mspy.schema.yaml"
+cp "$DOUBLE_PINYIN/double_pinyin_mspy.schema.yaml" "$SHARED/"
 
 rm -rf "$MAIN/cpp"
 mkdir -p "$MAIN/cpp"
