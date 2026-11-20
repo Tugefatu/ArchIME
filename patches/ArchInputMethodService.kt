@@ -419,7 +419,7 @@ class ArchInputMethodService : InputMethodService() {
         }
         root.addView(header, LinearLayout.LayoutParams(-1, dp(38)))
 
-        val scroll = ScrollView(this).apply { fillViewport = true }
+        val scroll = ScrollView(this).apply { isFillViewport = true }
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val entries = if (clipboardTab == 1) {
             listOf("你好！", "谢谢你。", "收到，我马上处理。", "好的，没问题。", "稍后回复你。")
