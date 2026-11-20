@@ -41,12 +41,26 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Align Java compiler target with Kotlin
+        shell: bash
+        run: |
+          cat > logs-jvm-compat.gradle <<'EOF'
+          allprojects {
+              afterEvaluate {
+                  tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+                      sourceCompatibility = '17'
+                      targetCompatibility = '17'
+                  }
+              }
+          }
+          EOF
+
       - name: Build UI-only Debug APK
         shell: bash
         run: |
           set -o pipefail
           mkdir -p logs
-          gradle --no-daemon -p ArchIME-0.7.2-dev :app:assembleDebug 2>&1 | tee logs/build.log
+          gradle --no-daemon -I logs-jvm-compat.gradle -p ArchIME-0.7.2-dev :app:assembleDebug 2>&1 | tee logs/build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
