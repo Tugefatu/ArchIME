@@ -48,6 +48,33 @@ class SettingsActivity : Activity() {
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
             })
         })
+        root.addView(Switch(this).apply {
+            text = "按键音效"
+            textSize = 15f
+            setTextColor(0xFFCFD5DE.toInt())
+            isChecked = prefs.getBoolean("sound_enabled", false)
+            setOnCheckedChangeListener { _, checked ->
+                prefs.edit().putBoolean("sound_enabled", checked).apply()
+            }
+        })
+        val volumeLabel = TextView(this).apply {
+            text = "按键音量：${prefs.getInt("sound_volume", 35)}%"
+            textSize = 14f
+            setTextColor(0xFFCFD5DE.toInt())
+        }
+        root.addView(volumeLabel)
+        root.addView(SeekBar(this).apply {
+            max = 100
+            progress = prefs.getInt("sound_volume", 35).coerceIn(0, 100)
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    volumeLabel.text = "按键音量：$progress%"
+                    prefs.edit().putInt("sound_volume", progress).apply()
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
+        })
         root.addView(TextView(this).apply {
             text = "按键反馈"
             textSize = 16f
@@ -64,7 +91,7 @@ class SettingsActivity : Activity() {
             }
         })
         root.addView(TextView(this).apply {
-            text = "设置会保存在本机。按键音、震动强度和微软双拼仍在开发中。"
+            text = "设置会保存在本机。当前提供原创建的轻点击音效；微软双拼和震动强度仍在开发中。"
             textSize = 12f
             setTextColor(0xFF8D98A8.toInt())
             setPadding(0, 22, 0, 0)
