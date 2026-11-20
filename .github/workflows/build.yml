@@ -11,7 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: unzip -q ArchIME-0_7_2-dev-source.zip
 
-      - name: Make keyboard usable without bundled Rime
+      - name: Keep keyboard usable if Rime initialization fails
         shell: bash
         run: |
           python3 - <<'PY'
@@ -29,10 +29,10 @@ jobs:
           s = p.read_text()
           start = s.index("        if (!isChineseActive())")
           end = s.index("        // Rime schemas", start)
-          replacement = """        // Rime is not bundled in this build yet; never swallow key presses.
+          replacement = """        // Never swallow key presses if the bundled Rime engine cannot initialize.
                   if (!isChineseActive() || !rimeReady) {
                       if (isChineseActive() && !rimeReady) {
-                          status.text = "ArchIME · Rime 未打包，暂用英文输入"
+                          status.text = "ArchIME · Rime 引擎未就绪，暂用英文输入"
                       }
                       commit(c.toString())
                       return
@@ -40,12 +40,27 @@ jobs:
           """
           s = s[:start] + replacement + s[end:]
           p.write_text(s)
-          print("Patched graceful English fallback.")
+          print("Patched safe English fallback.")
           PY
 
       - name: Refresh ArchIME keyboard layout
         shell: bash
         run: python3 patches/refresh_keyboard.py
+
+      - name: Build and stage Android ARM64 librime plus Microsoft Shuangpin data
+        shell: bash
+        run: bash patches/integrate_rime_native.sh
+
+      - name: Verify staged native source and Rime data
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s ArchIME-0.7.2-dev/app/src/main/cpp/CMakeLists.txt
+          test -s ArchIME-0.7.2-dev/app/src/main/cpp/archime_bridge.cpp
+          for f in default.yaml punctuation.yaml key_bindings.yaml luna_pinyin.dict.yaml stroke.schema.yaml stroke.dict.yaml double_pinyin_mspy.schema.yaml; do
+            test -s "ArchIME-0.7.2-dev/app/src/main/assets/rime/shared/$f"
+          done
+          echo "Native source tree and Microsoft Shuangpin runtime data are staged."
 
       - name: Inspect and archive unpacked source
         shell: bash
@@ -76,20 +91,17 @@ jobs:
           import re
           p = Path("ArchIME-0.7.2-dev/app/src/main/java/org/archime/ime/ArchInputMethodService.kt")
           s = p.read_text()
-          s = re.sub(r"(?<!CLASS_)TYPE_TEXT\b", "TYPE_CLASS_TEXT", s)
-          s = re.sub(r"(?<!CLASS_)TYPE_NUMBER\b", "TYPE_CLASS_NUMBER", s)
+          s = re.sub(r"(?<!CLASS_)TYPE_TEXT\\b", "TYPE_CLASS_TEXT", s)
+          s = re.sub(r"(?<!CLASS_)TYPE_NUMBER\\b", "TYPE_CLASS_NUMBER", s)
           p.write_text(s)
-          print("Patched Android InputType constants:")
-          for n, line in enumerate(s.splitlines(), 1):
-              if 325 <= n <= 342:
-                  print(f"{n}: {line}")
+          print("Patched Android InputType constants.")
           PY
 
       - name: Diagnose Gradle source and Maven access
         shell: bash
         run: |
           echo "=== Project files ==="
-          find "$GITHUB_WORKSPACE/ArchIME-0.7.2-dev" -maxdepth 3 -type f \( -name 'settings.gradle*' -o -name 'build.gradle*' -o -name 'gradle.properties' \) -print
+          find "$GITHUB_WORKSPACE/ArchIME-0.7.2-dev" -maxdepth 3 -type f \\( -name 'settings.gradle*' -o -name 'build.gradle*' -o -name 'gradle.properties' \\) -print
           for f in "$GITHUB_WORKSPACE"/ArchIME-0.7.2-dev/settings.gradle* "$GITHUB_WORKSPACE"/ArchIME-0.7.2-dev/build.gradle* "$GITHUB_WORKSPACE"/ArchIME-0.7.2-dev/app/build.gradle*; do
             if [ -f "$f" ]; then echo "=== $f ==="; sed -n '1,240p' "$f"; fi
           done
@@ -146,6 +158,19 @@ jobs:
           set -o pipefail
           mkdir -p "$GITHUB_WORKSPACE/logs"
           gradle --no-daemon -I "$GITHUB_WORKSPACE/logs-jvm-compat.gradle" -p "$GITHUB_WORKSPACE/ArchIME-0.7.2-dev" :app:assembleDebug 2>&1 | tee "$GITHUB_WORKSPACE/logs/build.log"
+
+      - name: Verify APK contains real ARM64 Rime engine and Microsoft Shuangpin schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="ArchIME-0.7.2-dev/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -l "$APK" | tee "$GITHUB_WORKSPACE/logs/apk-contents.txt"
+          unzip -l "$APK" | grep -q 'lib/arm64-v8a/libarchime_rime.so'
+          unzip -l "$APK" | grep -q 'assets/rime/shared/double_pinyin_mspy.schema.yaml'
+          unzip -l "$APK" | grep -q 'assets/rime/shared/luna_pinyin.dict.yaml'
+          unzip -l "$APK" | grep -q 'assets/rime/shared/stroke.dict.yaml'
+          echo "APK contains ARM64 ArchIME Rime bridge and Microsoft Shuangpin source data."
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
