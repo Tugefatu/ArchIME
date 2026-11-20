@@ -61,6 +61,11 @@ jobs:
           cat > "$GITHUB_WORKSPACE/logs-jvm-compat.gradle" <<'EOF'
           allprojects {
               afterEvaluate {
+                  def androidExtension = extensions.findByName("android")
+                  if (androidExtension != null) {
+                      androidExtension.compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+                      androidExtension.compileOptions.targetCompatibility = JavaVersion.VERSION_17
+                  }
                   tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
                       sourceCompatibility = '17'
                       targetCompatibility = '17'
