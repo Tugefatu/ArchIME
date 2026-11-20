@@ -29,6 +29,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Generate original key click sample
+        run: python3 android-v1/scripts/generate_key_click.py
       - name: Compile clean v1 project
         run: gradle --no-daemon -p android-v1 :app:assembleDebug
       - name: Verify APK
