@@ -47,11 +47,6 @@ jobs:
         shell: bash
         run: python3 patches/refresh_keyboard.py
 
-      - name: Apply Xiaomi-style keyboard, feedback and settings
-        shell: bash
-        run: python3 patches/apply_keyboard_refresh.py
-
-
       - name: Build and stage Android ARM64 librime plus Microsoft Shuangpin data
         shell: bash
         run: bash patches/integrate_rime_native.sh
