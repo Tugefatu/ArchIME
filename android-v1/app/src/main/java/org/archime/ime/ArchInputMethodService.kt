@@ -194,7 +194,11 @@ class ArchInputMethodService : InputMethodService() {
     }
 
     private fun weighted(weight: Float) =
-        LinearLayout.LayoutParams(0, dp(47), weight).apply {
+        LinearLayout.LayoutParams(
+            0,
+            dp(PreferenceManager.getDefaultSharedPreferences(this).getInt("key_height", 48).coerceIn(40, 64)),
+            weight
+        ).apply {
             setMargins(dp(2), dp(2), dp(2), dp(2))
         }
 
