@@ -48,8 +48,9 @@ replace_once(
             val ready = try {
                 val dir = filesDir.resolve("rime").apply { mkdirs() }
                 val install = RimeAssetInstaller.install(this, dir)
-                rimeInstallFailed = install.isFailure
-                install.isSuccess && engine.initialize(dir.absolutePath)
+                val initialized = install.isSuccess && engine.initialize(dir.absolutePath)
+                rimeInstallFailed = !initialized
+                initialized
             } catch (_: Throwable) {
                 rimeInstallFailed = true
                 false
@@ -58,7 +59,7 @@ replace_once(
             mainHandler.post {
                 if (serviceDestroyed) return@post
                 if (::status.isInitialized) status.text = inputStatus()
-                if (::candidates.isInitialized && !ready) refreshCandidates(emptyList())
+                if (::candidates.isInitialized) refreshCandidates(emptyList())
                 if (::root.isInitialized) root.invalidate()
             }
         }
