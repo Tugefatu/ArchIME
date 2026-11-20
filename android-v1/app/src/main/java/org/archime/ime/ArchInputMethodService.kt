@@ -12,11 +12,13 @@ import android.view.KeyEvent
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.ImageView
 
 class ArchInputMethodService : InputMethodService() {
     private var shift = false
     private var chineseMode = false
     private var keyboardRoot: LinearLayout? = null
+    private val letterButtons = linkedMapOf<Char, Button>()
 
     override fun onCreateInputView(): View {
         val root = LinearLayout(this).apply {
@@ -30,12 +32,10 @@ class ArchInputMethodService : InputMethodService() {
             orientation = LinearLayout.HORIZONTAL
             setPadding(dp(4), 0, dp(2), dp(4))
         }
-        val mark = TextView(this).apply {
-            text = "◢"
-            textSize = 25f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(0xFF1793D1.toInt())
-            gravity = Gravity.CENTER
+        val mark = ImageView(this).apply {
+            setImageResource(R.drawable.ic_arch_mark)
+            contentDescription = "Arch Linux"
+            scaleType = ImageView.ScaleType.FIT_CENTER
         }
         header.addView(mark, LinearLayout.LayoutParams(dp(34), dp(34)))
         header.addView(TextView(this).apply {
@@ -55,13 +55,15 @@ class ArchInputMethodService : InputMethodService() {
             }
             chars.forEach { ch ->
                 val key = when (ch) { '⇧' -> "⇧"; '⌫' -> "⌫"; else -> (if (shift) ch.uppercaseChar() else ch).toString() }
-                row.addView(keyButton(key, if (key == "⇧" || key == "⌫") 1.35f else 1f) {
+                val keyView = keyButton(key, if (key == "⇧" || key == "⌫") 1.35f else 1f) {
                     when (key) {
                         "⇧" -> { shift = !shift; refreshLetters() }
                         "⌫" -> backspace()
                         else -> commit(key)
                     }
-                }, LinearLayout.LayoutParams(0, dp(48), if (key == "⇧" || key == "⌫") 1.35f else 1f).apply {
+                }
+                if (key.length == 1 && key[0].isLetter()) letterButtons[key[0].lowercaseChar()] = keyView
+                row.addView(keyView, LinearLayout.LayoutParams(0, dp(48), if (key == "⇧" || key == "⌫") 1.35f else 1f).apply {
                     setMargins(dp(2), 0, dp(2), 0)
                 })
             }
@@ -134,12 +136,12 @@ class ArchInputMethodService : InputMethodService() {
     }
 
     private fun refreshLetters() {
-        // Recreating the view on shift would interrupt composing state; the next view refresh applies shift.
-        keyboardRoot?.invalidate()
+        letterButtons.forEach { (key, button) ->
+            button.text = if (shift) key.uppercaseChar().toString() else key.toString()
+        }
     }
 
     private fun refreshHeader() {
-        // Mode label is refreshed when Android recreates the input view.
         keyboardRoot?.invalidate()
     }
 
