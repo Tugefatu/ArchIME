@@ -47,6 +47,10 @@ jobs:
         shell: bash
         run: python3 patches/refresh_keyboard.py
 
+      - name: Apply clean WeChat-inspired keyboard refinements
+        shell: bash
+        run: python3 patches/apply_wechat_ui.py
+
       - name: Build and stage Android ARM64 librime plus Microsoft Shuangpin data
         shell: bash
         run: bash patches/integrate_rime_native.sh
