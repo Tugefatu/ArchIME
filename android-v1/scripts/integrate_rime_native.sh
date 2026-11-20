@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 ROOT="${GITHUB_WORKSPACE:?}"
 TEMP="${RUNNER_TEMP:-/tmp}"
 MAIN="$ROOT/android-v1/app/src/main"
@@ -9,6 +9,9 @@ TRIME="$TEMP/archime-trime"
 DOUBLE_PINYIN="$TEMP/archime-double-pinyin"
 TRIME_COMMIT="8ef9ff825c7e993934682f1fc6da0bccfc620360"
 
+echo "Workspace: $ROOT"
+echo "Legacy source archive expected at: $LEGACY_ZIP"
+ls -la "$ROOT/legacy" || true
 test -s "$LEGACY_ZIP"
 rm -rf "$OLD" "$TRIME" "$DOUBLE_PINYIN"
 mkdir -p "$OLD"
