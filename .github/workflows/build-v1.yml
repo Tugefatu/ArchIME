@@ -40,6 +40,9 @@ jobs:
           test -s "$APK"
           unzip -t "$APK"
           unzip -l "$APK" | grep -q 'classes.dex'
+          unzip -l "$APK" | grep -q 'assets/rime/shared/double_pinyin_mspy.schema.yaml'
+          unzip -p "$APK" assets/rime/shared/double_pinyin_mspy.schema.yaml | grep -q 'schema_id: double_pinyin_mspy'
+          unzip -p "$APK" assets/rime/shared/double_pinyin_mspy.schema.yaml | grep -q 'dictionary: luna_pinyin'
       - uses: actions/upload-artifact@v4
         with:
           name: ArchIME-v1-foundation-debug
