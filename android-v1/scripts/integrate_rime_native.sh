@@ -1,28 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="${GITHUB_WORKSPACE:?}"
-TEMP="${RUNNER_TEMP:-/tmp}"
+ROOT="\${GITHUB_WORKSPACE:?}"
+TEMP="\${RUNNER_TEMP:-/tmp}"
 MAIN="$ROOT/android-v1/app/src/main"
 LEGACY_ZIP="$ROOT/legacy/ArchIME-0_7_2-dev-source.zip"
 OLD="$TEMP/archime-legacy-source"
 TRIME="$TEMP/archime-trime"
-DOUBLE_PINYIN="$TEMP/archime-double-pinyin"
 TRIME_COMMIT="8ef9ff825c7e993934682f1fc6da0bccfc620360"
 
 test -s "$LEGACY_ZIP"
-rm -rf "$OLD" "$TRIME" "$DOUBLE_PINYIN"
+rm -rf "$OLD" "$TRIME"
 mkdir -p "$OLD"
 unzip -q "$LEGACY_ZIP" -d "$OLD"
+SRC="$OLD/ArchIME-0.7.2-dev/app/src/main"
+test -s "$SRC/cpp/archime_bridge.cpp"
+test -s "$SRC/assets/rime/shared/luna_pinyin.dict.yaml"
 
-echo "== Stage tested Rime Kotlin/JNI integration and dictionaries =="
-mkdir -p "$MAIN/java/org/archime/ime/engine" "$MAIN/assets/rime"
-cp "$OLD/java/org/archime/ime/engine/"*.kt "$MAIN/java/org/archime/ime/engine/"
-cp "$OLD/java/org/archime/ime/ArchInputMethodService.kt" "$MAIN/java/org/archime/ime/ArchInputMethodService.kt"
-sed -i 's/R\.drawable\.ic_arch_logo/R.drawable.ic_arch_mark/g' "$MAIN/java/org/archime/ime/ArchInputMethodService.kt"
-sed -i 's/InputType.TYPE_TEXT/InputType.TYPE_CLASS_TEXT/g; s/InputType.TYPE_NUMBER/InputType.TYPE_CLASS_NUMBER/g' "$MAIN/java/org/archime/ime/ArchInputMethodService.kt"
+echo "== Stage Rime runtime data and native bridge =="
+mkdir -p "$MAIN/assets"
 rm -rf "$MAIN/assets/rime"
-cp -a "$OLD/assets/rime" "$MAIN/assets/rime"
-cp "$OLD/cpp/archime_bridge.cpp" "$TEMP/archime_native_bridge.cpp"
+cp -a "$SRC/assets/rime" "$MAIN/assets/rime"
+cp "$SRC/cpp/archime_bridge.cpp" "$TEMP/archime_native_bridge.cpp"
 
 echo "== Fetch pinned Trime/librime source tree =="
 git clone --depth 1 --branch develop --recurse-submodules --shallow-submodules https://github.com/osfans/trime.git "$TRIME"
@@ -51,13 +49,13 @@ add_library(archime_rime SHARED archime_bridge.cpp)
 target_compile_features(archime_rime PRIVATE cxx_std_17)
 target_compile_definitions(archime_rime PRIVATE ARCHIME_RIME_DEPENDENCY_STAGED=1)
 target_include_directories(archime_rime PRIVATE
-  "${CMAKE_SOURCE_DIR}/librime/include"
-  "${CMAKE_SOURCE_DIR}/librime/src"
-  "${CMAKE_BINARY_DIR}/librime/src"
-  "${Opencc_INCLUDE_PATH}"
+  "\${CMAKE_SOURCE_DIR}/librime/include"
+  "\${CMAKE_SOURCE_DIR}/librime/src"
+  "\${CMAKE_BINARY_DIR}/librime/src"
+  "\${Opencc_INCLUDE_PATH}"
 )
 find_library(log-lib log REQUIRED)
-target_link_libraries(archime_rime PRIVATE rime-static ${Opencc_LIBRARY} ${log-lib})
+target_link_libraries(archime_rime PRIVATE rime-static \${Opencc_LIBRARY} \${log-lib})
 """
     p.write_text(s)
 PY
