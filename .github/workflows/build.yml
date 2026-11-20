@@ -30,7 +30,6 @@ jobs:
         shell: bash
         run: |
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          ls "$ANDROID_HOME"
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" --install \
             "platforms;android-35" \
@@ -46,7 +45,7 @@ jobs:
       - name: Align Java compiler target with Kotlin
         shell: bash
         run: |
-          cat > logs-jvm-compat.gradle <<'EOF'
+          cat > "$GITHUB_WORKSPACE/logs-jvm-compat.gradle" <<'EOF'
           allprojects {
               afterEvaluate {
                   tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
@@ -56,13 +55,14 @@ jobs:
               }
           }
           EOF
+          test -f "$GITHUB_WORKSPACE/logs-jvm-compat.gradle"
 
       - name: Build UI-only Debug APK
         shell: bash
         run: |
           set -o pipefail
-          mkdir -p logs
-          gradle --no-daemon -I logs-jvm-compat.gradle -p ArchIME-0.7.2-dev :app:assembleDebug 2>&1 | tee logs/build.log
+          mkdir -p "$GITHUB_WORKSPACE/logs"
+          gradle --no-daemon -I "$GITHUB_WORKSPACE/logs-jvm-compat.gradle" -p "$GITHUB_WORKSPACE/ArchIME-0.7.2-dev" :app:assembleDebug 2>&1 | tee "$GITHUB_WORKSPACE/logs/build.log"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
