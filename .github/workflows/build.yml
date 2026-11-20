@@ -43,6 +43,10 @@ jobs:
           print("Patched graceful English fallback.")
           PY
 
+      - name: Refresh ArchIME keyboard layout
+        shell: bash
+        run: python3 patches/refresh_keyboard.py
+
       - name: Inspect and archive unpacked source
         shell: bash
         run: |
