@@ -111,7 +111,7 @@ class SettingsActivity : Activity() {
             })
         })
         root.addView(TextView(this).apply {
-            text = "设置会保存在本机。当前提供原创建的轻点击音效；微软双拼仍在开发中；部分设备不支持精确震动强度。"
+            text = "设置会保存在本机。微软双拼由 Rime 引擎提供；首次启动可能需要初始化词库。部分设备不支持精确震动强度。"
             textSize = 12f
             setTextColor(0xFF8D98A8.toInt())
             setPadding(0, 22, 0, 0)
