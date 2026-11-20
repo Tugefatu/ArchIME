@@ -20,6 +20,19 @@ jobs:
         shell: bash
         run: unzip -q ArchIME-0_7_2-dev-source.zip
 
+      - name: Diagnose Gradle source and Maven access
+        shell: bash
+        run: |
+          echo "=== Project files ==="
+          find "$GITHUB_WORKSPACE/ArchIME-0.7.2-dev" -maxdepth 3 -type f \( -name 'settings.gradle*' -o -name 'build.gradle*' -o -name 'gradle.properties' \) -print
+          for f in "$GITHUB_WORKSPACE"/ArchIME-0.7.2-dev/settings.gradle* "$GITHUB_WORKSPACE"/ArchIME-0.7.2-dev/build.gradle* "$GITHUB_WORKSPACE"/ArchIME-0.7.2-dev/app/build.gradle*; do
+            if [ -f "$f" ]; then echo "=== $f ==="; sed -n '1,240p' "$f"; fi
+          done
+          echo "=== Maven Central probe ==="
+          curl -sSIL --max-time 20 https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.10.1/gson-2.10.1.pom | head -n 8
+          echo "=== Google Maven probe ==="
+          curl -sSIL --max-time 20 https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle/8.7.3/gradle-8.7.3.pom | head -n 8
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
