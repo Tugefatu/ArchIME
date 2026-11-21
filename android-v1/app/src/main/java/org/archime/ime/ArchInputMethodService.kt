@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.ColorDrawable
 import android.inputmethodservice.InputMethodService
 import android.media.AudioAttributes
 import android.media.SoundPool
@@ -22,6 +23,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.Button
@@ -101,6 +103,7 @@ class ArchInputMethodService : InputMethodService() {
     }
 
     override fun onCreateInputView(): View {
+        configureFrostedWindow()
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(6), dp(5), dp(6), dp(7))
@@ -203,6 +206,29 @@ class ArchInputMethodService : InputMethodService() {
         return root
     }
 
+    /**
+     * Android 12+ cross-window blur creates the real frosted-glass backdrop.
+     * The translucent panel remains legible when the system disables blur.
+     */
+    private fun configureFrostedWindow() {
+        val imeWindow = window?.window ?: return
+        imeWindow.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager = getSystemService(WindowManager::class.java)
+            val params = imeWindow.attributes
+            if (manager?.isCrossWindowBlurEnabled == true) {
+                params.flags = params.flags or WindowManager.LayoutParams.FLAG_BLUR_BEHIND
+                params.blurBehindRadius = dp(42)
+                params.dimAmount = 0.12f
+            } else {
+                params.flags = params.flags and WindowManager.LayoutParams.FLAG_BLUR_BEHIND.inv()
+                params.blurBehindRadius = 0
+                params.dimAmount = 0.22f
+            }
+            imeWindow.attributes = params
+        }
+    }
+
     private fun weighted(weight: Float) =
         LinearLayout.LayoutParams(
             0,
@@ -219,7 +245,7 @@ class ArchInputMethodService : InputMethodService() {
         typeface = Typeface.DEFAULT_BOLD
         gravity = Gravity.CENTER
         setTextColor(Color.WHITE)
-        background = keyBackground(0xFF08090C.toInt())
+        background = keyBackground(0xC90B1018.toInt())
         minWidth = 0
         minimumWidth = 0
         setPadding(0, 0, 0, 0)
@@ -246,7 +272,7 @@ class ArchInputMethodService : InputMethodService() {
         textSize = if (label.length > 1) 11f else 17f
         typeface = Typeface.DEFAULT_BOLD
         setTextColor(Color.WHITE)
-        background = keyBackground(if (label == "↵") 0xFF244C68.toInt() else 0xFF292D34.toInt())
+        background = keyBackground(if (label == "↵" || label == "换行") 0xD92D6591.toInt() else 0xC92A3039.toInt())
         minWidth = 0
         minimumWidth = 0
         setPadding(0, 0, 0, 0)
@@ -483,14 +509,15 @@ class ArchInputMethodService : InputMethodService() {
     }
 
     private fun panel() = GradientDrawable().apply {
-        setColor(0xFF171A20.toInt())
-        cornerRadius = dp(17).toFloat()
+        setColor(0xC8171D27.toInt())
+        cornerRadius = dp(20).toFloat()
+        setStroke(dp(1), 0x447FA9D5)
     }
 
     private fun keyBackground(color: Int) = GradientDrawable().apply {
         setColor(color)
-        cornerRadius = dp(9).toFloat()
-        setStroke(dp(1), 0xFF343A44.toInt())
+        cornerRadius = dp(10).toFloat()
+        setStroke(dp(1), 0x557F91A8)
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
