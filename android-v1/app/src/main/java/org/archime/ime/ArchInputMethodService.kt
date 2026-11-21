@@ -15,6 +15,10 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.preference.PreferenceManager
 import android.text.InputType
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.RelativeSizeSpan
+import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
@@ -158,7 +162,12 @@ class ArchInputMethodService : InputMethodService() {
                 }, weighted(1.25f))
             }
             chars.forEach { char ->
-                val button = key(char.toString()) { onLetter(char) }
+                val hint = when (index) {
+                    0 -> "1234567890"["qwertyuiop".indexOf(char)].toString()
+                    2 -> when (char) { 'z' -> "!"; 'x' -> "@"; 'c' -> "#"; 'v' -> "$"; 'b' -> "%"; 'n' -> "&"; 'm' -> "*"; else -> "" }
+                    else -> ""
+                }
+                val button = letterKey(char, hint) { onLetter(char) }
                 letterButtons[char] = button
                 row.addView(button, weighted(1f))
             }
@@ -172,9 +181,10 @@ class ArchInputMethodService : InputMethodService() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
-        bottom.addView(key("?123") { commit("?123") }, weighted(.95f))
-        bottom.addView(key(",") { commit(if (isChinese()) "，" else ",") }, weighted(.75f))
-        bottom.addView(key("空格") { onSpace() }, weighted(2.7f))
+        bottom.addView(key("123") { commit("123") }, weighted(.9f))
+        bottom.addView(key("☺") { commit("😊") }, weighted(.7f))
+        bottom.addView(key("，") { commit(if (isChinese()) "，" else ",") }, weighted(.7f))
+        bottom.addView(key("⌁") { onSpace() }, weighted(2.7f))
         modeButton = key(if (chineseMode) "双/英" else "英/双") {
             chineseMode = !chineseMode
             getSharedPreferences("archime_settings", MODE_PRIVATE).edit()
@@ -183,8 +193,8 @@ class ArchInputMethodService : InputMethodService() {
             refreshMode()
             refreshStatus()
         }
-        bottom.addView(modeButton, weighted(1.05f))
-        bottom.addView(key("↵") { enter() }, weighted(.9f))
+        bottom.addView(modeButton, weighted(.9f))
+        bottom.addView(key("换行") { enter() }, weighted(1.0f))
         root.addView(bottom)
 
         refreshCandidates(emptyList())
@@ -201,6 +211,34 @@ class ArchInputMethodService : InputMethodService() {
         ).apply {
             setMargins(dp(2), dp(2), dp(2), dp(2))
         }
+
+    private fun letterKey(char: Char, hint: String, action: () -> Unit) = Button(this).apply {
+        text = letterLabel(char, hint)
+        isAllCaps = false
+        textSize = 17f
+        typeface = Typeface.DEFAULT_BOLD
+        gravity = Gravity.CENTER
+        setTextColor(Color.WHITE)
+        background = keyBackground(0xFF08090C.toInt())
+        minWidth = 0
+        minimumWidth = 0
+        setPadding(0, 0, 0, 0)
+        stateListAnimator = null
+        setOnClickListener {
+            feedback(this)
+            action()
+        }
+    }
+
+    private fun letterLabel(char: Char, hint: String): CharSequence {
+        val label = if (shifted) char.uppercaseChar().toString() else char.toString()
+        if (hint.isEmpty()) return label
+        val value = "$hint\n$label"
+        return SpannableString(value).apply {
+            setSpan(RelativeSizeSpan(0.58f), 0, hint.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(ForegroundColorSpan(0xFF9AA3AF.toInt()), 0, hint.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
 
     private fun key(label: String, action: () -> Unit) = Button(this).apply {
         text = label
@@ -410,7 +448,12 @@ class ArchInputMethodService : InputMethodService() {
 
     private fun refreshLetters() {
         letterButtons.forEach { (char, button) ->
-            button.text = if (shifted) char.uppercaseChar().toString() else char.toString()
+            val hint = when (char) {
+                in "qwertyuiop" -> "1234567890"["qwertyuiop".indexOf(char)].toString()
+                'z' -> "!"; 'x' -> "@"; 'c' -> "#"; 'v' -> "$"; 'b' -> "%"; 'n' -> "&"; 'm' -> "*"
+                else -> ""
+            }
+            button.text = letterLabel(char, hint)
         }
     }
 
